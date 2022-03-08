@@ -1,0 +1,3 @@
+docker run -d --privileged --hostname node1 --name node1 -p 9870:9870 -p 9090:9090 tmp1 init
+docker run -d --privileged --hostname node2 --name node2 tmp1 init
+docker run -d --privileged --hostname node3 --name node3 tmp1 init
