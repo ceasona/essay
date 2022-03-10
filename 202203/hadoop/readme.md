@@ -52,7 +52,7 @@
 
    - ### core-site.xml
 
-     ```
+     ```xml
      <configuration>
          <property>
              <name>fs.defaultFS</name>
@@ -63,7 +63,7 @@
 
    - ### hdfs-site.xml
 
-     ```
+     ```xml
      <configuration>
          <property>
              <name>dfs.blocksize</name>
@@ -98,7 +98,7 @@
 
    - ### mapred-site.xml
 
-     ```
+     ```xml
      <configuration>
          <property>
              <name>mapreduce.framework.name</name>
@@ -109,7 +109,9 @@
 
    - ### yarn-site.xml
 
-     ```
+     hadoop job_id log
+
+     ```xml
      <configuration>
          <property>
              <name>yarn.resourcemanager.hostname</name>
@@ -122,6 +124,26 @@
          <property>
              <name>yarn.nodemanager.aux-services</name>
              <value>mapreduce_shuffle</value>
+         </property>
+         <property>
+             <name>yarn.scheduler.maximum-allocation-mb</name>
+             <value>2000</value>
+         </property>
+         <property>
+             <name>yarn.nodemanager.resource.memory-mb</name>
+             <value>2000</value>
+         </property>
+         <property>
+             <name>yarn.resourcemanager.address</name>
+             <value>node1:8032</value>
+         </property>
+         <property>
+             <name>yarn.resourcemanager.scheduler.address</name>
+             <value>node1:8030</value>
+         </property>
+         <property>
+             <name>yarn.resourcemanager.resource-tracker.address</name>
+             <value>node1:8031</value>
          </property>
      </configuration>
      ```
@@ -156,6 +178,9 @@
      ```
      hdfs --daemon start datanode
      yarn --daemon start nodemanager
+     
+     hdfs --daemon stop datanode
+     yarn --daemon stop nodemanager
      ```
 
    - ### 测试
@@ -170,6 +195,30 @@
      #下载文件
      hadoop fs -get /tmp/test/testboston.csv /tmp/
      ```
+     
+   - pyhdfs
+
+      ```
+      import os
+      from hdfs.client import InsecureClient
+      import pyhdfs
+      _url = "http://172.17.0.2:9870"
+      _client = InsecureClient(_url, user="hadoop")
+      print(_client.list('/tmp', status=False))
+      
+      fs = pyhdfs.HdfsClient(hosts="172.17.0.2:9870", user_name="hadoop")
+      print(fs.exists('/user'))
+      print(fs.get_home_directory())
+      print(fs.get_active_namenode())
+      if not fs.exists('/user/datasets/iris.csv'):
+          print("upload")
+          fs.copy_from_local(r"/root/project/datasets/iris.csv", '/user/datasets/iris.csv')
+      if not os.path.exists("/root/project/datasets/iris_2022.csv"):
+          print("download")
+          fs.copy_to_local(r"/user/datasets/iris.csv", '/root/project/datasets/iris_2022.csv')
+      ```
+
+      
 
 6. ## Hive
 
@@ -235,17 +284,100 @@
      select * from student_test;
      ```
 
+   - pyhive
+
+     [安装 pyhive](https://www.jianshu.com/p/cc93623db10b)
+
+     ```
+     apt-get install python-dev libsasl2-dev gcc
+      pip install sasl thrift thrift-sasl pyhive
+     ```
+
+     [no mechanism available: No worthy mechs found](https://blog.csdn.net/tianjun2012/article/details/104480324)
+
+     ```
+     apt install libsasl2-modules-gssapi-heimdal
+     ```
+
+     [hive-site.xml配置](https://www.cnblogs.com/netuml/p/7841387.html)
+
+     demo
+
+     ```
+     # /opt/apache-hive-3.1.2-bin/bin
+     # ./hive --service hiveserver2
+     ```
+
+     ```
+     from pyhive import hive
+     
+     conn = hive.Connection(host='172.17.0.2', port=10000)
+     cursor = conn.cursor()
+     cursor.execute('select * from student_test limit 10')
+     for result in cursor.fetchall():
+         print(result)
+     cursor.close()
+     conn.close()
+     ```
+
      
 
 7. ## 问题汇总
 
    - 查看 jps
 
+   - hive内无法insert
+
+     ```
+     Execution Error, return code 2 from org.apache.hadoop.hive.ql.exec.mr.MapRedTask
+     ```
+
+     [错误分析](https://blog.csdn.net/xiaohu21/article/details/108411741)
+     
+   - hadoop mapred[uce 出现 /bin/bash: /bin/java: No such file or directory](https://blog.csdn.net/u012954380/article/details/95546388)
+
+     ```
+     ln -s /usr/lib/jvm/jdk8u282-b08/bin/java /bin/java
+     ```
+
+   - hadoop 3.x [Could not find or load main class org.apache.hadoop.mapreduce.v2.app.MRAppMaster](https://blog.csdn.net/l1028386804/article/details/93385195)
+
+   - 从节点异常
+
+     [org.apache.hadoop.ipc.Client: Retrying connect to server: 0.0.0.0/0.0.0.0:8030](https://blog.csdn.net/lijixianglijixiang/article/details/73518745)
+
+     ```
+     找出错误日志
+     find / -name container_1646879797383_0006_01_000001
+     cd /opt/hadoop-3.3.1/logs/userlogs/application_1646879797383_0006/container_1646879797383_0006_01_000001
+     cat syslog
+     ```
+
+     ```
+     <property>
+         <name>yarn.resourcemanager.address</name>
+         <value>node1:8032</value>
+       </property>
+       <property>
+         <name>yarn.resourcemanager.scheduler.address</name>
+         <value>node1:8030</value>
+       </property>
+       <property>
+         <name>yarn.resourcemanager.resource-tracker.address</name>
+         <value>node1:8031</value>
+       </property>
+     
+     ```
+
+   - 
+
 8. ## 参考
 
    - [Ubuntu20.04安装Hadoop和Hive](https://blog.csdn.net/weixin_38924500/article/details/106257047?spm=1001.2101.3001.6650.1&utm_medium=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&depth_1-utm_source=distribute.pc_relevant.none-task-blog-2%7Edefault%7ECTRLIST%7ERate-1.pc_relevant_default&utm_relevant_index=2)
    - [hive 学习](https://blog.csdn.net/eases_stone/article/details/80607109)
    - [Hadoop fs常用命令](https://www.jianshu.com/p/b18dc7344cbd)
-   - [官方文档](https://hadoop.apache.org/docs/r1.0.4/cn/cluster_setup.html)
+   - hadoop[官方文档](https://hadoop.apache.org/docs/r1.0.4/cn/cluster_setup.html)
    - [HDFS完全分布式集群搭建](https://www.cnblogs.com/williamzheng/p/13043461.html)
+   - [Hive 学习笔记（启动方式，内置服务）](https://www.cnblogs.com/netuml/p/7841387.html)
+   - [pyhdfs文档](https://pyhdfs.readthedocs.io/en/latest/pyhdfs.html)
 
