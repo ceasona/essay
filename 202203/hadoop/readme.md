@@ -157,7 +157,7 @@
    - ### 主节点
 
      ```
-     # 一次性启动
+     # 一次性启动 先format
      start-all.sh
      # 逐个组件启动
      start-dfs.sh
