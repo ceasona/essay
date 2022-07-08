@@ -13,6 +13,7 @@ print('[address]:', Account.privateKeyToAccount(private_key).address)
 message = encode_defunct(text=msg)
 print(encode_defunct(hexstr=str(private_key)))
 print("[message]:", message)
+print("[message]-decode:", message.body.decode('utf8'))
 signed_message = w3.eth.account.sign_message(message, private_key=private_key)
 print('[signed_message]:', signed_message)
 
