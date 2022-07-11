@@ -1,3 +1,4 @@
+import codecs
 from eth_account import Account
 from eth_account._utils.signing import sign_message_hash, to_eth_v, to_bytes32
 from eth_keys.backends.native.ecdsa import deterministic_generate_k
@@ -28,9 +29,9 @@ joined = b'\x19' + message.version + message.header + message.body
 
 message_hash = _hash_eip191_message(message)
 print(joined)
-print(Hash32(keccak(joined)))
-print(message_hash)
-
+print('[message_hash_1]:', Hash32(keccak(joined)))
+print('[message_hash_2]:', message_hash)
+print('[message_hash_hex]:', codecs.decode(codecs.encode(HexBytes(message_hash), 'hex'), 'ascii'))
 msg_hash_bytes = HexBytes(message_hash)
 print(msg_hash_bytes)
 
@@ -63,7 +64,7 @@ def ecdsa_sign(msg_hash, pri_key):
     return signature
 
 
-def sign_message_hash(msg_hash, pri_key):
+def my_sign_message_hash(msg_hash, pri_key):
     signature = ecdsa_sign(msg_hash, pri_key)
     (v_raw, r, s) = signature.vrs
     v = to_eth_v(v_raw)
@@ -71,7 +72,7 @@ def sign_message_hash(msg_hash, pri_key):
     return (v, r, s, eth_signature_bytes)
 
 
-print(sign_message_hash(message_hash, private_key))
+print(my_sign_message_hash(message_hash, private_key))
 # SignedMessage(
 #             messageHash=msg_hash_bytes,
 #             r=r,
