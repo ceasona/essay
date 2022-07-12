@@ -3,7 +3,8 @@ import codecs
 import os
 from pathlib import Path
 from ecdsa import SigningKey
-
+# 密钥生成方法
+# https://help.aliyun.com/document_detail/64281.html
 
 
 def get_private_key(pem_file):
